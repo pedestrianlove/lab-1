@@ -3,6 +3,15 @@
 - This repository contains 2 example eBPF programs: `minimal` and `bootstrap`.
 - 如需在codespace/devcontainer內編譯`bootstrap`，則需在編譯參數LD的地方加上`/usr/lib/libargp.a`
 
+## 0. Setup Environment
+### a. VirtualBox
+- https://drive.google.com/drive/folders/1LbSv4U3Q2M-KiFXZMa5NezVZr4TO6bP2?usp=sharing
+### b. Ubuntu
+- `sudo apt install -y bpftool libbpf-dev build-essential llvm`
+### c. Codespace/devcontainer (不推，有的程式會跑不了)
+- https://docs.github.com/en/codespaces/getting-started/quickstart
+- https://code.visualstudio.com/docs/devcontainers/tutorial
+
 ## 1. Observe the file structure
 - `some_program.bpf.c` :  
   This is the eBPF program we're going to load into the Kernel.
