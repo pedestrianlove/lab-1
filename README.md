@@ -7,7 +7,7 @@
 ### a. VirtualBox
 - https://drive.google.com/drive/folders/1LbSv4U3Q2M-KiFXZMa5NezVZr4TO6bP2?usp=sharing
 ### b. Ubuntu
-- `sudo apt install -y bpftool libbpf-dev build-essential llvm`
+- `sudo apt install -y bpftool libbpf-dev build-essential clang`
 ### c. Codespace/devcontainer (不推，有的程式會跑不了)
 - https://docs.github.com/en/codespaces/getting-started/quickstart
 - https://code.visualstudio.com/docs/devcontainers/tutorial
