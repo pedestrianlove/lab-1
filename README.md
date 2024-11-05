@@ -12,9 +12,13 @@
 - https://docs.github.com/en/codespaces/getting-started/quickstart
 - https://code.visualstudio.com/docs/devcontainers/tutorial
 
-## 1. Observe the file structure
+## 1. 檔案概述
 - `some_program.bpf.c` :  
   This is the eBPF program we're going to load into the Kernel.
 
 - `some_program.c` :  
   This file is our frontend in the userspace, and it is responsible for loading the eBPF program into Kernel.
+
+## 2. 編譯流桯
+<img width="1247" alt="image" src="https://github.com/user-attachments/assets/18ab4519-c925-4d4c-a5e7-3209801e1c4f">
+
