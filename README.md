@@ -2,6 +2,10 @@
 
 - This repository contains 2 example eBPF programs: `minimal` and `bootstrap`.
 - 如需在codespace/devcontainer內編譯`bootstrap`，則需在編譯參數LD的地方加上`/usr/lib/libargp.a`
+- 如有`#include <asm/types.h>`找不到檔案的[情況](https://stackoverflow.com/a/77465534/6607512)，可以執行下列指令:
+```bash
+sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
+```
 
 ## 0. Setup Environment
 ### a. VirtualBox
