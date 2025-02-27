@@ -156,7 +156,7 @@
 <p><code>void tcp_rcv_established(struct sock *sk, struct sk_buff *skb);</code></p>
 <p>上面是附著的核心函式。當連線建立以後，每次用戶傳輸都會呼叫此函式。 fentry 的函式簽名會與附著的函式相同，並且可以讀取引數，例如 <code>sk</code>、<code>skb</code>，就可以藉此得到所需資訊。</p>
 <h2 id="tcprttbpfc-示範程式碼"><a class="header" href="#tcprttbpfc-示範程式碼">tcprtt.bpf.c 示範程式碼</a></h2>
-<pre><code class="language-clike">#include "vmlinux.h"
+<pre><code class="language-c">#include "vmlinux.h"
 #include &lt;bpf/bpf_helpers.h&gt;
 #include &lt;bpf/bpf_tracing.h&gt;
 #include &lt;bpf/bpf_core_read.h&gt;
@@ -190,13 +190,13 @@ int BPF_PROG(tcp_rcv, struct sock *sk /*, optional */)
 </ul>
 <h3 id="ip-和-port"><a class="header" href="#ip-和-port">ip 和 port</a></h3>
 <p>被封裝在 <code>__sk_common</code>  中</p>
-<pre><code class="language-clike">struct sock {
+<pre><code class="language-c">struct sock {
     struct sock_common    __sk_common;
     ...
 };
 </code></pre>
 <p>類別其實都是整數，然後 <code>skc_rcv_saddr</code> 是來源 ip ，<code>skc_num</code> 是來源 port 。 只有 <code>skc_num</code> 是以 host endian ，其他皆為 network endian</p>
-<pre><code class="language-clike">/**
+<pre><code class="language-c">/**
  *	struct sock_common - minimal network layer representation of sockets
  *	@skc_daddr: Foreign IPv4 addr
  *	@skc_rcv_saddr: Bound local IPv4 addr
@@ -215,7 +215,7 @@ struct sock_common {
 <p>核心程式用 host endian 紀錄 port ，network endian 紀錄 ip，可以利用 <code>bpf_ntohs()</code></p>
 <h3 id="rtt"><a class="header" href="#rtt">rtt</a></h3>
 <p>使用 bpf_tracing_net.h 中的 <code>tcp_sk()</code>，傳入 <code>sk</code> 呼叫得到 <code>struct tcp_sock *</code> 。</p>
-<pre><code class="language-clike">struct tcp_sock {
+<pre><code class="language-c">struct tcp_sock {
     u32	srtt_us;	/* smoothed round trip time &lt;&lt; 3 in usecs */`
     ...
 };

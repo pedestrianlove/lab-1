@@ -157,7 +157,7 @@
 <p>三次交握時， socket 的狀態會改變。兩次“狀態改變”相隔的時間相當於 rtt ，也就是“從 <strong>SYN_SENT</strong> 到 <strong>ESTABLISHED</strong> 的時間”和“從 <strong>SYN_RECV</strong> 到 <strong>ESTABLISHED</strong> 的時間”，可以自行計算。</p>
 <p><strong>inet_sock_set_state</strong> 這個 tracepoint 在每次 socket 狀態切換時被觸發，再透過 map 紀錄同個 socket 上次觸發的時間，就可以在狀態變成 <strong>ESTABLISHED</strong> 的時候計算 rtt 。另外，<strong>TCP_CLOSE</strong> 代表連線關閉，可以刪除 map 中的紀錄。</p>
 <h2 id="tcprtt_tpbpfc-示範程式碼"><a class="header" href="#tcprtt_tpbpfc-示範程式碼">tcprtt_tp.bpf.c 示範程式碼</a></h2>
-<pre><code class="language-clike">#include "vmlinux.h"
+<pre><code class="language-c">#include "vmlinux.h"
 #include &lt;bpf/bpf_helpers.h&gt;
 #include &lt;bpf/bpf_tracing.h&gt;
 #include &lt;bpf/bpf_core_read.h&gt;
@@ -194,7 +194,7 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 <li>rtt：<code>bpf_ktime_get_ns()</code> 可以取得當前時間，map 紀錄上次觸發的時間，兩者相減得到 rtt</li>
 </ul>
 <h3 id="參數類別說明"><a class="header" href="#參數類別說明">參數類別說明</a></h3>
-<pre><code class="language-clike">struct trace_event_raw_inet_sock_set_state {
+<pre><code class="language-c">struct trace_event_raw_inet_sock_set_state {
     ...
     const void *skaddr;
     int oldstate;

@@ -163,7 +163,7 @@
 <li>tracepoint: 核心程式碼設立和提供 tracepoint 以供觀測，屬於靜態追蹤。這套機制由 Linux 提供，屬於穩定的公開介面。</li>
 </ul>
 <h2 id="系統架構"><a class="header" href="#系統架構">系統架構</a></h2>
-<p>系統元件圖
+<p>系統元件圖:<br />
 <img src="https://hackmd.io/_uploads/ByPo075gJe.png" alt="System Block Diagram" /></p>
 <ul>
 <li><code>hellp.py</code>、<code>hello()</code>：eBPF 程式，有核心和用戶兩個部分。課程中兩個部分都用 C 開發</li>
@@ -184,10 +184,10 @@
 <li><code>vmlinux.h</code> ：具有 kernel 內所有類別的定義</li>
 <li><code>bpftool</code> ：生成 skeleton 和 <code>vmlinux.h</code></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="範例-minimal"><a class="header" href="#範例-minimal">範例: minimal</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="範例-minimal程式及其makefile"><a class="header" href="#範例-minimal程式及其makefile">範例: minimal程式及其Makefile</a></h1>
 <p>核心監測到用戶使用系統呼叫 <code>write()</code> 時輸出訊息，用戶附著完核心程式後會不斷使用 <code>write()</code></p>
 <h2 id="minimal-核心程式"><a class="header" href="#minimal-核心程式">minimal 核心程式</a></h2>
-<pre><code class="language-clike">// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<pre><code class="language-c">// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2020 Facebook */
 
 // 這裡不符常規，用 "linux/bpf.h" 取代 "vmlinux.h"
@@ -222,7 +222,7 @@ int handle_tp(void *ctx)
 <p>依據程式類型，函式有對應的簽名。 <code>handle_tp</code> 屬於 tracepoint ，參數只有一個指標，類別則是 tracepoint 名稱加上前綴 <code>trace_event_raw_</code> ，定義在 <code>vmlinux.h</code></p>
 <h2 id="minimal-用戶程式"><a class="header" href="#minimal-用戶程式">minimal 用戶程式</a></h2>
 <h3 id="minimalskelh"><a class="header" href="#minimalskelh">minimal.skel.h</a></h3>
-<pre><code class="language-clike">...
+<pre><code class="language-c">...
     
 // kernel 程式對應的結構體
 // 在呼叫 api 會使用 maps/progs/links
@@ -245,7 +245,7 @@ struct minimal_bpf {
 };
 </code></pre>
 <p>skeleton 提供用戶的 api ，簡單的 eBPF 用戶程式可以不用自己呼叫 libbpf ，只需要使用 skeleton api</p>
-<pre><code class="language-clike">// setup
+<pre><code class="language-c">// setup
 static inline struct minimal_bpf *minimal_bpf__open(void) { ... }
 static inline int minimal_bpf__load(struct minimal_bpf *obj) { ... }
 static inline struct minimal_bpf *minimal_bpf__open_and_load(void) { ... }
@@ -256,7 +256,7 @@ static inline void minimal_bpf__destroy(struct minimal_bpf *obj) { ... }
 static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 </code></pre>
 <h3 id="minimalc"><a class="header" href="#minimalc">minimal.c</a></h3>
-<pre><code class="language-clike">int main(int argc, char **argv)
+<pre><code class="language-c">int main(int argc, char **argv)
 {
     struct minimal_bpf *skel = minimal_bpf__open();
     skel-&gt;bss-&gt;my_pid = getpid();   // set global variable
@@ -281,7 +281,7 @@ static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 <h2 id="makefile"><a class="header" href="#makefile">makefile</a></h2>
 <h3 id="基本規則"><a class="header" href="#基本規則">基本規則</a></h3>
 <p>makefile 是自動化建置工具，透過撰寫文字檔定義檔案的相依和生成規則，將程式碼編譯成執行檔。</p>
-<pre><code class="language-python"># 檔名為 makefile 或 Makefile
+<pre><code class="language-makefile"># 檔名為 makefile 或 Makefile
 
 目標文件 ...：依賴項目 ...  # 多個項目透過空格分開
     終端命令  # 開頭一定要是 TAB
@@ -295,7 +295,7 @@ static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 <li><code>$@</code>： 目標文件</li>
 </ul>
 <h3 id="示範-makefile"><a class="header" href="#示範-makefile">示範 makefile</a></h3>
-<pre><code class="language-python"># generate vmlinux header
+<pre><code class="language-makefile"># generate vmlinux header
 vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h 
 
@@ -352,14 +352,14 @@ pid 232272  fd 19: prog_id 396  tracepoint  sys_enter_execve
 <p>觀察 minimal 程式的輸出，並依提示使用其它指令確認程式正常運作。</p>
 </li>
 </ol>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="boostrap-簡介"><a class="header" href="#boostrap-簡介">boostrap 簡介</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="map介紹-以bootstrap為例"><a class="header" href="#map介紹-以bootstrap為例">map介紹: 以bootstrap為例</a></h1>
 <ul>
 <li>程式執行的時候，在 hash map 紀錄 pid 和時間</li>
 <li>程式結束的時候，利用 pid 查詢執行開始的時間，計算時長。將資訊透過 ring buffer 傳遞給用戶</li>
 </ul>
 <h2 id="hash-map"><a class="header" href="#hash-map">hash map</a></h2>
 <p>eBPF map 的定義程式碼如下，根據種類稍有差異， hash map 包含 <code>type</code>、<code>key</code>、<code>value</code></p>
-<pre><code class="language-clike">struct {
+<pre><code class="language-c">struct {
 	__uint(type, BPF_MAP_TYPE_HASH);
 	__uint(max_entries, 8192);
 	__type(key, pid_t);
@@ -368,7 +368,7 @@ pid 232272  fd 19: prog_id 396  tracepoint  sys_enter_execve
 </code></pre>
 <p>核心態的 map 操作 api</p>
 <p>:::spoiler</p>
-<pre><code class="language-clike">/*
+<pre><code class="language-c">/*
  * bpf_map_lookup_elem
  *
  * 	Perform a lookup in *map* for an entry associated to *key*.
@@ -417,7 +417,7 @@ static long (* const bpf_map_delete_elem)(void *map, const void *key) = (void *)
 :::</p>
 <h2 id="ring-buffer"><a class="header" href="#ring-buffer">ring buffer</a></h2>
 <p>從核心傳遞資料到用戶程式，api 操作流程大致為：</p>
-<pre><code class="language-clike">// 分配記憶體
+<pre><code class="language-c">// 分配記憶體
 struct event *e = bpf_ringbuf_reserve(&amp;rb, sizeof(*e), 0);
 
 // 設定 e 的數值...
@@ -426,7 +426,7 @@ struct event *e = bpf_ringbuf_reserve(&amp;rb, sizeof(*e), 0);
 bpf_ringbuf_submit(e, 0);
 </code></pre>
 <p>用戶接收部分則是：</p>
-<pre><code class="language-clike">// * 獲取資源，用 skeleton maps 下的成員指定 map
+<pre><code class="language-c">// * 獲取資源，用 skeleton maps 下的成員指定 map
 // 在程式加載之後才能操作 map
 // * callback "handle_event" 來處理資料
 rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, NULL, NULL);
@@ -445,20 +445,20 @@ ring_buffer__free(rb);
 <ul>
 <li>
 <p>讀取系統核心的資料或記憶體，需要特別的函式。例如從系統取得目前行程的 <code>struct task_struct</code> 讀取 ppid (parent pid)</p>
-<pre><code class="language-clike">struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+<pre><code class="language-c">struct task_struct *task = (struct task_struct *)bpf_get_current_task();
 pid_t ppid = BPF_CORE_READ(task, real_parent, tgid);
 </code></pre>
 <p>功能在普通 c 語言等同於</p>
-<pre><code class="language-clike">pid_t ppid = task-&gt;real_parent-&gt;tgid;
+<pre><code class="language-c">pid_t ppid = task-&gt;real_parent-&gt;tgid;
 </code></pre>
 <p>已經宣告變數時，要傳入指標和大小，同系列的 api 有：</p>
-<pre><code class="language-clike">BPF_CORE_READ_INTO(&amp;ppid, task, real_parent, tgid);
+<pre><code class="language-c">BPF_CORE_READ_INTO(&amp;ppid, task, real_parent, tgid);
 bpf_core_read(&amp;ppid, sizeof(ppid), real_parent);
 </code></pre>
 </li>
 <li>
 <p>從參數中讀取資料</p>
-<pre><code class="language-clike">SEC("tp/sched/sched_process_exec")
+<pre><code class="language-c">SEC("tp/sched/sched_process_exec")
 int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 {
     ...
@@ -469,7 +469,7 @@ int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 </li>
 <li>
 <p>唯讀的全域變數定義須包含 const volatile ，跟 MMIO 操作的道理相同</p>
-<pre><code class="language-clike">const volatile unsigned long long min_duration_ns = 0;
+<pre><code class="language-c">const volatile unsigned long long min_duration_ns = 0;
 </code></pre>
 </li>
 </ul>
@@ -527,7 +527,7 @@ PID     COMM             SRC                         DST                     LAT
 <p>三次交握時， socket 的狀態會改變。兩次“狀態改變”相隔的時間相當於 rtt ，也就是“從 <strong>SYN_SENT</strong> 到 <strong>ESTABLISHED</strong> 的時間”和“從 <strong>SYN_RECV</strong> 到 <strong>ESTABLISHED</strong> 的時間”，可以自行計算。</p>
 <p><strong>inet_sock_set_state</strong> 這個 tracepoint 在每次 socket 狀態切換時被觸發，再透過 map 紀錄同個 socket 上次觸發的時間，就可以在狀態變成 <strong>ESTABLISHED</strong> 的時候計算 rtt 。另外，<strong>TCP_CLOSE</strong> 代表連線關閉，可以刪除 map 中的紀錄。</p>
 <h2 id="tcprtt_tpbpfc-示範程式碼"><a class="header" href="#tcprtt_tpbpfc-示範程式碼">tcprtt_tp.bpf.c 示範程式碼</a></h2>
-<pre><code class="language-clike">#include "vmlinux.h"
+<pre><code class="language-c">#include "vmlinux.h"
 #include &lt;bpf/bpf_helpers.h&gt;
 #include &lt;bpf/bpf_tracing.h&gt;
 #include &lt;bpf/bpf_core_read.h&gt;
@@ -564,7 +564,7 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 <li>rtt：<code>bpf_ktime_get_ns()</code> 可以取得當前時間，map 紀錄上次觸發的時間，兩者相減得到 rtt</li>
 </ul>
 <h3 id="參數類別說明"><a class="header" href="#參數類別說明">參數類別說明</a></h3>
-<pre><code class="language-clike">struct trace_event_raw_inet_sock_set_state {
+<pre><code class="language-c">struct trace_event_raw_inet_sock_set_state {
     ...
     const void *skaddr;
     int oldstate;
@@ -585,7 +585,7 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 <p><code>void tcp_rcv_established(struct sock *sk, struct sk_buff *skb);</code></p>
 <p>上面是附著的核心函式。當連線建立以後，每次用戶傳輸都會呼叫此函式。 fentry 的函式簽名會與附著的函式相同，並且可以讀取引數，例如 <code>sk</code>、<code>skb</code>，就可以藉此得到所需資訊。</p>
 <h2 id="tcprttbpfc-示範程式碼"><a class="header" href="#tcprttbpfc-示範程式碼">tcprtt.bpf.c 示範程式碼</a></h2>
-<pre><code class="language-clike">#include "vmlinux.h"
+<pre><code class="language-c">#include "vmlinux.h"
 #include &lt;bpf/bpf_helpers.h&gt;
 #include &lt;bpf/bpf_tracing.h&gt;
 #include &lt;bpf/bpf_core_read.h&gt;
@@ -619,13 +619,13 @@ int BPF_PROG(tcp_rcv, struct sock *sk /*, optional */)
 </ul>
 <h3 id="ip-和-port"><a class="header" href="#ip-和-port">ip 和 port</a></h3>
 <p>被封裝在 <code>__sk_common</code>  中</p>
-<pre><code class="language-clike">struct sock {
+<pre><code class="language-c">struct sock {
     struct sock_common    __sk_common;
     ...
 };
 </code></pre>
 <p>類別其實都是整數，然後 <code>skc_rcv_saddr</code> 是來源 ip ，<code>skc_num</code> 是來源 port 。 只有 <code>skc_num</code> 是以 host endian ，其他皆為 network endian</p>
-<pre><code class="language-clike">/**
+<pre><code class="language-c">/**
  *	struct sock_common - minimal network layer representation of sockets
  *	@skc_daddr: Foreign IPv4 addr
  *	@skc_rcv_saddr: Bound local IPv4 addr
@@ -644,7 +644,7 @@ struct sock_common {
 <p>核心程式用 host endian 紀錄 port ，network endian 紀錄 ip，可以利用 <code>bpf_ntohs()</code></p>
 <h3 id="rtt"><a class="header" href="#rtt">rtt</a></h3>
 <p>使用 bpf_tracing_net.h 中的 <code>tcp_sk()</code>，傳入 <code>sk</code> 呼叫得到 <code>struct tcp_sock *</code> 。</p>
-<pre><code class="language-clike">struct tcp_sock {
+<pre><code class="language-c">struct tcp_sock {
     u32	srtt_us;	/* smoothed round trip time &lt;&lt; 3 in usecs */`
     ...
 };

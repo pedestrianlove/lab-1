@@ -152,14 +152,14 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="boostrap-簡介"><a class="header" href="#boostrap-簡介">boostrap 簡介</a></h1>
+                        <h1 id="map介紹-以bootstrap為例"><a class="header" href="#map介紹-以bootstrap為例">map介紹: 以bootstrap為例</a></h1>
 <ul>
 <li>程式執行的時候，在 hash map 紀錄 pid 和時間</li>
 <li>程式結束的時候，利用 pid 查詢執行開始的時間，計算時長。將資訊透過 ring buffer 傳遞給用戶</li>
 </ul>
 <h2 id="hash-map"><a class="header" href="#hash-map">hash map</a></h2>
 <p>eBPF map 的定義程式碼如下，根據種類稍有差異， hash map 包含 <code>type</code>、<code>key</code>、<code>value</code></p>
-<pre><code class="language-clike">struct {
+<pre><code class="language-c">struct {
 	__uint(type, BPF_MAP_TYPE_HASH);
 	__uint(max_entries, 8192);
 	__type(key, pid_t);
@@ -168,7 +168,7 @@
 </code></pre>
 <p>核心態的 map 操作 api</p>
 <p>:::spoiler</p>
-<pre><code class="language-clike">/*
+<pre><code class="language-c">/*
  * bpf_map_lookup_elem
  *
  * 	Perform a lookup in *map* for an entry associated to *key*.
@@ -217,7 +217,7 @@ static long (* const bpf_map_delete_elem)(void *map, const void *key) = (void *)
 :::</p>
 <h2 id="ring-buffer"><a class="header" href="#ring-buffer">ring buffer</a></h2>
 <p>從核心傳遞資料到用戶程式，api 操作流程大致為：</p>
-<pre><code class="language-clike">// 分配記憶體
+<pre><code class="language-c">// 分配記憶體
 struct event *e = bpf_ringbuf_reserve(&amp;rb, sizeof(*e), 0);
 
 // 設定 e 的數值...
@@ -226,7 +226,7 @@ struct event *e = bpf_ringbuf_reserve(&amp;rb, sizeof(*e), 0);
 bpf_ringbuf_submit(e, 0);
 </code></pre>
 <p>用戶接收部分則是：</p>
-<pre><code class="language-clike">// * 獲取資源，用 skeleton maps 下的成員指定 map
+<pre><code class="language-c">// * 獲取資源，用 skeleton maps 下的成員指定 map
 // 在程式加載之後才能操作 map
 // * callback "handle_event" 來處理資料
 rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, NULL, NULL);
@@ -245,20 +245,20 @@ ring_buffer__free(rb);
 <ul>
 <li>
 <p>讀取系統核心的資料或記憶體，需要特別的函式。例如從系統取得目前行程的 <code>struct task_struct</code> 讀取 ppid (parent pid)</p>
-<pre><code class="language-clike">struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+<pre><code class="language-c">struct task_struct *task = (struct task_struct *)bpf_get_current_task();
 pid_t ppid = BPF_CORE_READ(task, real_parent, tgid);
 </code></pre>
 <p>功能在普通 c 語言等同於</p>
-<pre><code class="language-clike">pid_t ppid = task-&gt;real_parent-&gt;tgid;
+<pre><code class="language-c">pid_t ppid = task-&gt;real_parent-&gt;tgid;
 </code></pre>
 <p>已經宣告變數時，要傳入指標和大小，同系列的 api 有：</p>
-<pre><code class="language-clike">BPF_CORE_READ_INTO(&amp;ppid, task, real_parent, tgid);
+<pre><code class="language-c">BPF_CORE_READ_INTO(&amp;ppid, task, real_parent, tgid);
 bpf_core_read(&amp;ppid, sizeof(ppid), real_parent);
 </code></pre>
 </li>
 <li>
 <p>從參數中讀取資料</p>
-<pre><code class="language-clike">SEC("tp/sched/sched_process_exec")
+<pre><code class="language-c">SEC("tp/sched/sched_process_exec")
 int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 {
     ...
@@ -269,7 +269,7 @@ int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 </li>
 <li>
 <p>唯讀的全域變數定義須包含 const volatile ，跟 MMIO 操作的道理相同</p>
-<pre><code class="language-clike">const volatile unsigned long long min_duration_ns = 0;
+<pre><code class="language-c">const volatile unsigned long long min_duration_ns = 0;
 </code></pre>
 </li>
 </ul>
