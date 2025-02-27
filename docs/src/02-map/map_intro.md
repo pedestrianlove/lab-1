@@ -16,9 +16,9 @@ struct {
 } exec_start SEC(".maps");
 ```
 
-核心態的 map 操作 api
+<details>
+<summary>點我展開核心態的 map 操作 api</summary>
 
-:::spoiler
 ```c
 /*
  * bpf_map_lookup_elem
@@ -63,11 +63,12 @@ static long (* const bpf_map_update_elem)(void *map, const void *key, const void
  */
 static long (* const bpf_map_delete_elem)(void *map, const void *key) = (void *) 3;
 ```
-:::
+</details>
 
-:::info
+<div class="warning">
+
 核心及用戶 api 格式可能很像，但兩者是不同概念，一個使用系統呼叫，一個使用核心內的函式。
-:::
+</div>
 
 ## ring buffer
 從核心傳遞資料到用戶程式，api 操作流程大致為：
