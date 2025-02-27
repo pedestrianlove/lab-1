@@ -6,7 +6,7 @@
 
 ## tcprtt.bpf.c 示範程式碼
 
-```clike
+```c
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
@@ -45,7 +45,7 @@ int BPF_PROG(tcp_rcv, struct sock *sk /*, optional */)
 
 被封裝在 `__sk_common`  中
 
-```clike
+```c
 struct sock {
     struct sock_common    __sk_common;
     ...
@@ -54,7 +54,7 @@ struct sock {
 
 類別其實都是整數，然後 `skc_rcv_saddr` 是來源 ip ，`skc_num` 是來源 port 。 只有 `skc_num` 是以 host endian ，其他皆為 network endian
 
-```clike
+```c
 /**
  *	struct sock_common - minimal network layer representation of sockets
  *	@skc_daddr: Foreign IPv4 addr
@@ -78,7 +78,7 @@ struct sock_common {
 
 使用 bpf_tracing_net.h 中的 `tcp_sk()`，傳入 `sk` 呼叫得到 `struct tcp_sock *` 。
 
-```clike
+```c
 struct tcp_sock {
     u32	srtt_us;	/* smoothed round trip time << 3 in usecs */`
     ...

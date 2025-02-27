@@ -1,10 +1,10 @@
-# 範例: minimal
+# 範例: minimal程式及其Makefile
 
 核心監測到用戶使用系統呼叫 `write()` 時輸出訊息，用戶附著完核心程式後會不斷使用 `write()` 
 
 ## minimal 核心程式
 
-```clike
+```c
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2020 Facebook */
 
@@ -43,7 +43,7 @@ int handle_tp(void *ctx)
 ## minimal 用戶程式
 ### minimal.skel.h
 
-```clike
+```c
 ...
     
 // kernel 程式對應的結構體
@@ -69,7 +69,7 @@ struct minimal_bpf {
 
 skeleton 提供用戶的 api ，簡單的 eBPF 用戶程式可以不用自己呼叫 libbpf ，只需要使用 skeleton api
 
-```clike
+```c
 // setup
 static inline struct minimal_bpf *minimal_bpf__open(void) { ... }
 static inline int minimal_bpf__load(struct minimal_bpf *obj) { ... }
@@ -83,7 +83,7 @@ static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 
 ### minimal.c
 
-```clike
+```c
 int main(int argc, char **argv)
 {
     struct minimal_bpf *skel = minimal_bpf__open();
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
 makefile 是自動化建置工具，透過撰寫文字檔定義檔案的相依和生成規則，將程式碼編譯成執行檔。
 
-```python
+```makefile
 # 檔名為 makefile 或 Makefile
 
 目標文件 ...：依賴項目 ...  # 多個項目透過空格分開
@@ -129,7 +129,7 @@ makefile 是自動化建置工具，透過撰寫文字檔定義檔案的相依�
 
 ### 示範 makefile
 
-```python
+```makefile
 # generate vmlinux header
 vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h 

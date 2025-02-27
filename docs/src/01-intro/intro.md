@@ -12,7 +12,7 @@ eBPF 程式的兩個目的：觀測和改變核心行為，用於觀測的程式
 
 ## 系統架構
 
-系統元件圖
+系統元件圖:  
 ![System Block Diagram](https://hackmd.io/_uploads/ByPo075gJe.png)
 
 - `hellp.py`、`hello()`：eBPF 程式，有核心和用戶兩個部分。課程中兩個部分都用 C 開發

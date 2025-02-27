@@ -8,7 +8,7 @@
 
 ## tcprtt_tp.bpf.c 示範程式碼
 
-```clike
+```c
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
@@ -48,7 +48,7 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 
 ### 參數類別說明
 
-```clike
+```c
 struct trace_event_raw_inet_sock_set_state {
     ...
     const void *skaddr;

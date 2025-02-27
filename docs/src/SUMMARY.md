@@ -1,7 +1,7 @@
 # Summary
 
 # 一、認識eBPF
-- [eBPF簡介](./01-intro/intro.md)
+- [eBPF介紹](./01-intro/intro.md)
 - [範例: minimal程式及其Makefile](./01-intro/minimal.md)
 - [實作: 編譯minimal](./01-intro/minimal-compile.md)
 
@@ -14,6 +14,7 @@
 - [說明: 使用tracepoint](./03-tcprtt/tracepoint.md)
 - [說明: 使用fentry](./03-tcprtt/fentry.md)
 
-# 參考資料
-- [References](./references.md)
+---
+
+- [參考資料](./references.md)
 
