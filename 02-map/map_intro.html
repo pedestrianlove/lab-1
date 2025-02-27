@@ -1,0 +1,327 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>map介紹: 以bootstrap為例 - eBPF實作 - Lab 1</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">eBPF實作 - Lab 1</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="boostrap-簡介"><a class="header" href="#boostrap-簡介">boostrap 簡介</a></h1>
+<ul>
+<li>程式執行的時候，在 hash map 紀錄 pid 和時間</li>
+<li>程式結束的時候，利用 pid 查詢執行開始的時間，計算時長。將資訊透過 ring buffer 傳遞給用戶</li>
+</ul>
+<h2 id="hash-map"><a class="header" href="#hash-map">hash map</a></h2>
+<p>eBPF map 的定義程式碼如下，根據種類稍有差異， hash map 包含 <code>type</code>、<code>key</code>、<code>value</code></p>
+<pre><code class="language-clike">struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 8192);
+	__type(key, pid_t);
+	__type(value, u64);
+} exec_start SEC(".maps");
+</code></pre>
+<p>核心態的 map 操作 api</p>
+<p>:::spoiler</p>
+<pre><code class="language-clike">/*
+ * bpf_map_lookup_elem
+ *
+ * 	Perform a lookup in *map* for an entry associated to *key*.
+ *
+ * Returns
+ * 	Map value associated to *key*, or **NULL** if no entry was
+ * 	found.
+ */
+static void *(* const bpf_map_lookup_elem)(void *map, const void *key) = (void *) 1;
+
+/*
+ * bpf_map_update_elem
+ *
+ * 	Add or update the value of the entry associated to *key* in
+ * 	*map* with *value*. *flags* is one of:
+ *
+ * 	**BPF_NOEXIST**
+ * 		The entry for *key* must not exist in the map.
+ * 	**BPF_EXIST**
+ * 		The entry for *key* must already exist in the map.
+ * 	**BPF_ANY**
+ * 		No condition on the existence of the entry for *key*.
+ *
+ * 	Flag value **BPF_NOEXIST** cannot be used for maps of types
+ * 	**BPF_MAP_TYPE_ARRAY** or **BPF_MAP_TYPE_PERCPU_ARRAY**  (all
+ * 	elements always exist), the helper would return an error.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static long (* const bpf_map_update_elem)(void *map, const void *key, const void *value, __u64 flags) = (void *) 2;
+
+/*
+ * bpf_map_delete_elem
+ *
+ * 	Delete entry with *key* from *map*.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static long (* const bpf_map_delete_elem)(void *map, const void *key) = (void *) 3;
+</code></pre>
+<p>:::</p>
+<p>:::info
+核心及用戶 api 格式可能很像，但兩者是不同概念，一個使用系統呼叫，一個使用核心內的函式。
+:::</p>
+<h2 id="ring-buffer"><a class="header" href="#ring-buffer">ring buffer</a></h2>
+<p>從核心傳遞資料到用戶程式，api 操作流程大致為：</p>
+<pre><code class="language-clike">// 分配記憶體
+struct event *e = bpf_ringbuf_reserve(&amp;rb, sizeof(*e), 0);
+
+// 設定 e 的數值...
+
+// 發送資料
+bpf_ringbuf_submit(e, 0);
+</code></pre>
+<p>用戶接收部分則是：</p>
+<pre><code class="language-clike">// * 獲取資源，用 skeleton maps 下的成員指定 map
+// 在程式加載之後才能操作 map
+// * callback "handle_event" 來處理資料
+rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, NULL, NULL);
+...
+
+// 處理資料的迴圈
+while (!exiting) {
+    err = ring_buffer__poll(rb, 100 /* timeout, ms */);
+}
+...
+
+// 釋放資源
+ring_buffer__free(rb);
+</code></pre>
+<h2 id="boostrap-核心程式"><a class="header" href="#boostrap-核心程式">boostrap 核心程式</a></h2>
+<ul>
+<li>
+<p>讀取系統核心的資料或記憶體，需要特別的函式。例如從系統取得目前行程的 <code>struct task_struct</code> 讀取 ppid (parent pid)</p>
+<pre><code class="language-clike">struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+pid_t ppid = BPF_CORE_READ(task, real_parent, tgid);
+</code></pre>
+<p>功能在普通 c 語言等同於</p>
+<pre><code class="language-clike">pid_t ppid = task-&gt;real_parent-&gt;tgid;
+</code></pre>
+<p>已經宣告變數時，要傳入指標和大小，同系列的 api 有：</p>
+<pre><code class="language-clike">BPF_CORE_READ_INTO(&amp;ppid, task, real_parent, tgid);
+bpf_core_read(&amp;ppid, sizeof(ppid), real_parent);
+</code></pre>
+</li>
+<li>
+<p>從參數中讀取資料</p>
+<pre><code class="language-clike">SEC("tp/sched/sched_process_exec")
+int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
+{
+    ...
+    fname_off = ctx-&gt;__data_loc_filename &amp; 0xFFFF
+    bpf_probe_read_str(&amp;e-&gt;filename, sizeof(e-&gt;filename), (void *)ctx + fname_off);
+}
+</code></pre>
+</li>
+<li>
+<p>唯讀的全域變數定義須包含 const volatile ，跟 MMIO 操作的道理相同</p>
+<pre><code class="language-clike">const volatile unsigned long long min_duration_ns = 0;
+</code></pre>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../01-intro/minimal-compile.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../02-map/bootstrap-compile.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../01-intro/minimal-compile.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../02-map/bootstrap-compile.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
