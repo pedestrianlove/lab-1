@@ -1,6 +1,8 @@
 # Lab 1： 操作和觀察 minimal 和 verifier 
 
-- 練習1:建置 minimal 和觀察程式運行
+- 如果你的電腦還沒有設定好eBPF的編譯工具，請參考[這裡](https://github.com/easy-ebpf/practice_vm)設定好你的環境。
+
+- 練習1: 建置 minimal 和觀察程式運行
 
     - `make minimal` 建置執行檔，然後用 `sudo ./minimal` 執行
     - 查看 eBPF 輸出訊息
