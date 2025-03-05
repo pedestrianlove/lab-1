@@ -1,4 +1,4 @@
-# tracepoint 實作說明
+# tracepoint 程式開發介紹：tcprtt_tp
 
 ![tcp](https://hackmd.io/_uploads/Sy-DmkxWyx.png)
 
@@ -11,12 +11,7 @@
 ```c
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
-
-#include "tcprtt.h"
-
-#include "bpf_tracing_net.h"
+...
 
 // TODO: define ring buffer
 // TODO: define hash map
@@ -41,7 +36,9 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 }
 ```
 
-## 搜集資料
+tracepoint 類型程式參數只有一個指標，類別則是 tracepoint 名稱加上前綴 `trace_event_raw_` ，定義在 `vmlinux.h`
+
+## 搜集輸出資料
 
 - ip 和 port：從 `struct trace_event_raw_inet_sock_set_state *ctx` 取得
 - rtt：`bpf_ktime_get_ns()` 可以取得當前時間，map 紀錄上次觸發的時間，兩者相減得到 rtt
@@ -66,3 +63,10 @@ struct trace_event_raw_inet_sock_set_state {
 - `saddr`, `daddr`: ip，網路位元組順序，用 `bpf_core_read(dst, sz, src)` 讀取
 - `sport`, `dport`: port，本機位元組順序
 
+### 目標二：練習項目
+
+- 開發 eBPF 核心程式，在用戶輸出 TCP 相關資訊，包含 pid, command, 目標和來源的 ip 及 port 和延遲時間
+    1. 完成核心程式 **tcprtt.bpf.c**、**tcprtt_tp.bpf.c**。完成範例程式碼 TODO 部分
+    2. 編譯執行檔 **tcprtt**、**tcprtt_tp**
+    3. 執行並確認 ip、port
+- 比較同一筆連線兩種方式得到的數值是否相符

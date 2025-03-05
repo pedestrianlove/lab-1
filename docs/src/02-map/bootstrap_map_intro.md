@@ -1,11 +1,11 @@
-# map介紹: 以bootstrap為例
+# boostrap map 介紹
 
-- 程式執行的時候，在 hash map 紀錄 pid 和時間
-- 程式結束的時候，利用 pid 查詢執行開始的時間，計算時長。將資訊透過 ring buffer 傳遞給用戶
+附著到核心執行和結束程式的 tracepoint ，測量執行時間。
 
 ## hash map
 
-eBPF map 的定義程式碼如下，根據種類稍有差異， hash map 包含 `type`、`key`、`value`
+### bootstrap.bpf.c
+宣告 eBPF map 的程式碼如下。根據種類，結構需要的成員各有不同， hash map 包含 `type`、`key`、`value`
 
 ```c
 struct {
@@ -16,8 +16,37 @@ struct {
 } exec_start SEC(".maps");
 ```
 
+程式執行的時候，在 hash map 紀錄 pid 和時間
+
+```c
+SEC("tp/sched/sched_process_exec")
+int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
+{
+    ...
+    bpf_map_update_elem(&exec_start, &pid, &ts, BPF_ANY);
+}
+```
+
+程式結束的時候，利用 pid 查詢執行開始的時間，計算時長。將資訊透過 ring buffer 傳遞給用戶
+
+```c
+SEC("tp/sched/sched_process_exit")
+int handle_exit(struct trace_event_raw_sched_process_template *ctx)
+{
+    ...
+    /* if we recorded start of the process, calculate lifetime duration */
+    start_ts = bpf_map_lookup_elem(&exec_start, &pid);
+    if (start_ts)
+        duration_ns = bpf_ktime_get_ns() - *start_ts;
+    else if (min_duration_ns)
+        return 0;
+    bpf_map_delete_elem(&exec_start, &pid);
+}
+```
+
+
 <details>
-<summary>點我展開核心態的 map 操作 api</summary>
+    <summary>核心態 map api 相關說明</summary>
 
 ```c
 /*
@@ -66,11 +95,21 @@ static long (* const bpf_map_delete_elem)(void *map, const void *key) = (void *)
 </details>
 
 <div class="warning">
-
 核心及用戶 api 格式可能很像，但兩者是不同概念，一個使用系統呼叫，一個使用核心內的函式。
 </div>
 
 ## ring buffer
+### bootstrap.bpf.c
+
+eBPF ring buffer map 的宣告
+
+```c
+struct {
+	__uint(type, BPF_MAP_TYPE_RINGBUF);
+	__uint(max_entries, 256 * 1024);
+} rb SEC(".maps");
+```
+
 從核心傳遞資料到用戶程式，api 操作流程大致為：
 
 ```c
@@ -83,6 +122,7 @@ struct event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
 bpf_ringbuf_submit(e, 0);
 ```
 
+### bootstrap.c
 用戶接收部分則是：
 
 ```c
@@ -101,43 +141,3 @@ while (!exiting) {
 // 釋放資源
 ring_buffer__free(rb);
 ```
-
-## boostrap 核心程式
-
-- 讀取系統核心的資料或記憶體，需要特別的函式。例如從系統取得目前行程的 `struct task_struct` 讀取 ppid (parent pid)
-
-    ```c
-    struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-    pid_t ppid = BPF_CORE_READ(task, real_parent, tgid);
-    ```
-
-    功能在普通 c 語言等同於
-
-    ```c
-    pid_t ppid = task->real_parent->tgid;
-    ```
-
-    已經宣告變數時，要傳入指標和大小，同系列的 api 有：
-    
-    ```c
-    BPF_CORE_READ_INTO(&ppid, task, real_parent, tgid);
-    bpf_core_read(&ppid, sizeof(ppid), real_parent);
-    ```
-
-- 從參數中讀取資料
-
-    ```c
-    SEC("tp/sched/sched_process_exec")
-    int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
-    {
-        ...
-        fname_off = ctx->__data_loc_filename & 0xFFFF
-        bpf_probe_read_str(&e->filename, sizeof(e->filename), (void *)ctx + fname_off);
-    }
-    ```
-
-- 唯讀的全域變數定義須包含 const volatile ，跟 MMIO 操作的道理相同
-
-    ```c
-    const volatile unsigned long long min_duration_ns = 0;
-    ```

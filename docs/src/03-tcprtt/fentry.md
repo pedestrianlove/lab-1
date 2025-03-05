@@ -1,22 +1,15 @@
-# fentry 實作說明
+# fentry 程式開發介紹：tcprtt
 
 `void tcp_rcv_established(struct sock *sk, struct sk_buff *skb);`
 
 上面是附著的核心函式。當連線建立以後，每次用戶傳輸都會呼叫此函式。 fentry 的函式簽名會與附著的函式相同，並且可以讀取引數，例如 `sk`、`skb`，就可以藉此得到所需資訊。
 
-## tcprtt.bpf.c 示範程式碼
+## tcprtt.bpf.c 範例
 
 ```c
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_endian.h>
-
-// for the definition of the type shared between user and kernel
-#include "tcprtt.h"
-
-#include "bpf_tracing_net.h"
+...
     
 // TODO: define ring buffer
 
@@ -36,7 +29,7 @@ int BPF_PROG(tcp_rcv, struct sock *sk /*, optional */)
 
 使用 `BPF_PROG()` 定義 fentry 函式， `tcp_rcv` 是實際函式的名稱，後面則是參數，要依序對應附著的核心函式的參數。
 
-## 蒐集資料
+## 蒐集輸出資料
 
 - pid, command：使用 `bpf_get_current_pid_tgid()`、`bpf_get_current_comm()`，用法參考 minimal 和 bootstrap
 - ip, port 和 rtt：需要從 `struct sock *sk` 取得
@@ -86,17 +79,3 @@ struct tcp_sock {
 ```
 
 將 `srtt_us` 右移三位元就是 rtt 。因為 `struct tcp_sock` 是核心記憶體，得用 `BPF_CORE_READ` 讀取。
-
-## 測試範例
-
-在本機可以透過命令列工具簡單製造 tcp 連線
-
-```shell
-# server
-$ python3 -m http.server
-
-# client
-$ curl 0.0.0.0:8000
-```
-
-比對輸出紀錄的 ip、port ，確認運作正常
