@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>範例: minimal程式及其Makefile - eBPF實作 - Lab 1</title>
+        <title>eBPF程式開發介紹: minimal - eBPF實作 - Lab</title>
 
 
         <!-- Custom HTML head -->
@@ -120,7 +120,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">eBPF實作 - Lab 1</h1>
+                    <h1 class="menu-title">eBPF實作 - Lab</h1>
 
                     <div class="right-buttons">
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -152,9 +152,16 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="範例-minimal程式及其makefile"><a class="header" href="#範例-minimal程式及其makefile">範例: minimal程式及其Makefile</a></h1>
+                        <h1 id="ebpf-程式開發介紹-minimal"><a class="header" href="#ebpf-程式開發介紹-minimal">eBPF 程式開發介紹： minimal</a></h1>
+<h2 id="minimal-簡介"><a class="header" href="#minimal-簡介">minimal 簡介</a></h2>
 <p>核心監測到用戶使用系統呼叫 <code>write()</code> 時輸出訊息，用戶附著完核心程式後會不斷使用 <code>write()</code></p>
-<h2 id="minimal-核心程式"><a class="header" href="#minimal-核心程式">minimal 核心程式</a></h2>
+<h2 id="程式架構"><a class="header" href="#程式架構">程式架構</a></h2>
+<ul>
+<li><code>minimal.bpf.c</code> ：核心程式</li>
+<li><code>minimal.skel.h</code> : 由<code>minimal.bpf.o</code>產生而來的skeleton，以便userspace中的<code>minimal.c</code>調用。</li>
+<li><code>minimal.c</code> ：用戶程式，負責加載和附著核心程式</li>
+</ul>
+<h2 id="minimalbpfc"><a class="header" href="#minimalbpfc">minimal.bpf.c</a></h2>
 <pre><code class="language-c">// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2020 Facebook */
 
@@ -163,7 +170,6 @@
 #include &lt;linux/bpf.h&gt;
 #include &lt;bpf/bpf_helpers.h&gt;
 
-// 部分 bpf api 需要 license
 // SEC("license") 指定 symbol's section 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
@@ -187,12 +193,14 @@ int handle_tp(void *ctx)
     return 0;
 }
 </code></pre>
-<p>依據程式類型，函式有對應的簽名。 <code>handle_tp</code> 屬於 tracepoint ，參數只有一個指標，類別則是 tracepoint 名稱加上前綴 <code>trace_event_raw_</code> ，定義在 <code>vmlinux.h</code></p>
-<h2 id="minimal-用戶程式"><a class="header" href="#minimal-用戶程式">minimal 用戶程式</a></h2>
-<h3 id="minimalskelh"><a class="header" href="#minimalskelh">minimal.skel.h</a></h3>
+<ul>
+<li><code>char LICENSE[] SEC("license")</code>：聲明程式的 license 。有些 bpf api 需要 license 才能使用，載入程式的時候 verifier 會驗證</li>
+<li><code>my_pid</code>：核心和用戶也可以利用共用變數溝通</li>
+</ul>
+<h2 id="minimalskelh"><a class="header" href="#minimalskelh">minimal.skel.h</a></h2>
+<p>kernel 程式的抽象用結構體代表</p>
 <pre><code class="language-c">...
-    
-// kernel 程式對應的結構體
+
 // 在呼叫 api 會使用 maps/progs/links
 // bss/data/rodata 用戶可以直接存取
 struct minimal_bpf {
@@ -223,7 +231,8 @@ static inline int minimal_bpf__attach(struct minimal_bpf *obj) { ... }
 static inline void minimal_bpf__destroy(struct minimal_bpf *obj) { ... }
 static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 </code></pre>
-<h3 id="minimalc"><a class="header" href="#minimalc">minimal.c</a></h3>
+<h2 id="minimalc"><a class="header" href="#minimalc">minimal.c</a></h2>
+<p>用戶程式透過 <code>my_pid</code> 設定核心的過濾條件，只有 <code>minimal.c</code> 觸發的 <code>write()</code> 才會印 log</p>
 <pre><code class="language-c">int main(int argc, char **argv)
 {
     struct minimal_bpf *skel = minimal_bpf__open();
@@ -241,66 +250,9 @@ static inline void minimal_bpf__detach(struct minimal_bpf *obj) { ... }
 }
 </code></pre>
 <ul>
-<li>全域變數必須在程式加載前設定</li>
+<li>共用變數 <code>my_pid</code> 必須在程式加載前設定</li>
 <li>tracepoints, kprobes 和特定類型的 eBPF 程式 libbpf 可以查看 <code>SEC()</code> 進行自動附著</li>
 </ul>
-<h2 id="ebpf-編譯流程"><a class="header" href="#ebpf-編譯流程">eBPF 編譯流程</a></h2>
-<p><img src="https://hackmd.io/_uploads/SkVxXBs-yg.png" alt="截圖 2024-11-08 下午3.50.40" /></p>
-<h2 id="makefile"><a class="header" href="#makefile">makefile</a></h2>
-<h3 id="基本規則"><a class="header" href="#基本規則">基本規則</a></h3>
-<p>makefile 是自動化建置工具，透過撰寫文字檔定義檔案的相依和生成規則，將程式碼編譯成執行檔。</p>
-<pre><code class="language-makefile"># 檔名為 makefile 或 Makefile
-
-目標文件 ...：依賴項目 ...  # 多個項目透過空格分開
-    終端命令  # 開頭一定要是 TAB
-    ...
-</code></pre>
-<p>在 makefile 檔案所在的目錄執行 <code>make &lt;目標文件&gt;</code> 生成特定目標， <code>make</code> 則是生成第一個規則的目標。</p>
-<p>特殊符號說明：</p>
-<ul>
-<li><code>$^</code>： 所有依賴項目</li>
-<li><code>$&lt;</code>： 第一個依賴項目</li>
-<li><code>$@</code>： 目標文件</li>
-</ul>
-<h3 id="示範-makefile"><a class="header" href="#示範-makefile">示範 makefile</a></h3>
-<pre><code class="language-makefile"># generate vmlinux header
-vmlinux.h:
-	bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h 
-
-# build bpf kernel object file
-minimal.bpf.o: minimal.bpf.c vmlinux.h
-	clang -g -O2 -target bpf -c $&lt; -o $@
-
-# generate skeleton
-minimal.skel.h: minimal.bpf.o
-	bpftool gen skeleton $&lt; &gt; $@
-
-# build app
-minimal: minimal.c minimal.skel.h
-	clang -g minimal.c -lbpf -lelf -lz -o $@
-
-</code></pre>
-<ul>
-<li><code>-O2</code>, <code>-target bpf</code> 是必要的選項</li>
-<li><code>-lbpf -lelf -lz</code> 執行檔動態連結函式庫</li>
-<li>執行檔不用連結核心目標檔</li>
-</ul>
-<h2 id="除錯相關"><a class="header" href="#除錯相關">除錯相關</a></h2>
-<ul>
-<li>需要提升權限執行程式，也就是使用 <code>sudo ./&lt;executable&gt;</code> 執行</li>
-<li>查看 eBPF 輸出訊息</li>
-</ul>
-<pre><code class="language-shell">$ sudo cat /sys/kernel/debug/tracing/trace_pipe
-    &lt;...&gt;-3840345 [010] d... 3220701.101143: bpf_trace_printk: BPF triggered from PID 3840345.
-    &lt;...&gt;-3840345 [010] d... 3220702.101265: bpf_trace_printk: BPF triggered from PID 3840345.
-</code></pre>
-<ul>
-<li>查看當前附著的程式</li>
-</ul>
-<pre><code class="language-shell">$ sudo bpftool perf show
-pid 232272  fd 17: prog_id 394  kprobe  func do_execve  offset 0
-pid 232272  fd 19: prog_id 396  tracepoint  sys_enter_execve
-</code></pre>
 
                     </main>
 

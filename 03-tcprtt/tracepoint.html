@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>說明: 使用tracepoint - eBPF實作 - Lab 1</title>
+        <title>tracepoint 程式開發介紹：tcprtt_tp - eBPF實作 - Lab</title>
 
 
         <!-- Custom HTML head -->
@@ -120,7 +120,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">eBPF實作 - Lab 1</h1>
+                    <h1 class="menu-title">eBPF實作 - Lab</h1>
 
                     <div class="right-buttons">
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -152,19 +152,14 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="tracepoint-實作說明"><a class="header" href="#tracepoint-實作說明">tracepoint 實作說明</a></h1>
+                        <h1 id="tracepoint-程式開發介紹tcprtt_tp"><a class="header" href="#tracepoint-程式開發介紹tcprtt_tp">tracepoint 程式開發介紹：tcprtt_tp</a></h1>
 <p><img src="https://hackmd.io/_uploads/Sy-DmkxWyx.png" alt="tcp" /></p>
 <p>三次交握時， socket 的狀態會改變。兩次“狀態改變”相隔的時間相當於 rtt ，也就是“從 <strong>SYN_SENT</strong> 到 <strong>ESTABLISHED</strong> 的時間”和“從 <strong>SYN_RECV</strong> 到 <strong>ESTABLISHED</strong> 的時間”，可以自行計算。</p>
 <p><strong>inet_sock_set_state</strong> 這個 tracepoint 在每次 socket 狀態切換時被觸發，再透過 map 紀錄同個 socket 上次觸發的時間，就可以在狀態變成 <strong>ESTABLISHED</strong> 的時候計算 rtt 。另外，<strong>TCP_CLOSE</strong> 代表連線關閉，可以刪除 map 中的紀錄。</p>
 <h2 id="tcprtt_tpbpfc-示範程式碼"><a class="header" href="#tcprtt_tpbpfc-示範程式碼">tcprtt_tp.bpf.c 示範程式碼</a></h2>
 <pre><code class="language-c">#include "vmlinux.h"
 #include &lt;bpf/bpf_helpers.h&gt;
-#include &lt;bpf/bpf_tracing.h&gt;
-#include &lt;bpf/bpf_core_read.h&gt;
-
-#include "tcprtt.h"
-
-#include "bpf_tracing_net.h"
+...
 
 // TODO: define ring buffer
 // TODO: define hash map
@@ -188,7 +183,8 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
     return 0;
 }
 </code></pre>
-<h2 id="搜集資料"><a class="header" href="#搜集資料">搜集資料</a></h2>
+<p>tracepoint 類型程式參數只有一個指標，類別則是 tracepoint 名稱加上前綴 <code>trace_event_raw_</code> ，定義在 <code>vmlinux.h</code></p>
+<h2 id="搜集輸出資料"><a class="header" href="#搜集輸出資料">搜集輸出資料</a></h2>
 <ul>
 <li>ip 和 port：從 <code>struct trace_event_raw_inet_sock_set_state *ctx</code> 取得</li>
 <li>rtt：<code>bpf_ktime_get_ns()</code> 可以取得當前時間，map 紀錄上次觸發的時間，兩者相減得到 rtt</li>
@@ -211,16 +207,27 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
 <li><code>saddr</code>, <code>daddr</code>: ip，網路位元組順序，用 <code>bpf_core_read(dst, sz, src)</code> 讀取</li>
 <li><code>sport</code>, <code>dport</code>: port，本機位元組順序</li>
 </ul>
+<h3 id="目標二練習項目"><a class="header" href="#目標二練習項目">目標二：練習項目</a></h3>
+<ul>
+<li>開發 eBPF 核心程式，在用戶輸出 TCP 相關資訊，包含 pid, command, 目標和來源的 ip 及 port 和延遲時間
+<ol>
+<li>完成核心程式 <strong>tcprtt.bpf.c</strong>、<strong>tcprtt_tp.bpf.c</strong>。完成範例程式碼 TODO 部分</li>
+<li>編譯執行檔 <strong>tcprtt</strong>、<strong>tcprtt_tp</strong></li>
+<li>執行並確認 ip、port</li>
+</ol>
+</li>
+<li>比較同一筆連線兩種方式得到的數值是否相符</li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../03-tcprtt/target.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../03-tcprtt/fentry-practice.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../03-tcprtt/fentry.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../03-tcprtt/tracepoint-practice.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -230,11 +237,11 @@ int handle_set_state(struct trace_event_raw_inet_sock_set_state *ctx)
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../03-tcprtt/target.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../03-tcprtt/fentry-practice.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../03-tcprtt/fentry.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../03-tcprtt/tracepoint-practice.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
